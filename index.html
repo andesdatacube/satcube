@@ -643,8 +643,8 @@
 <h2 id="how-to-use"><strong>How to use</strong> 🛠️<a class="headerlink" href="#how-to-use" title="Permanent link">&para;</a></h2>
 <h3 id="basic-usage-working-with-sentinel-2-data"><strong>Basic usage: working with sentinel-2 data</strong> 🌍<a class="headerlink" href="#basic-usage-working-with-sentinel-2-data" title="Permanent link">&para;</a></h3>
 <h4 id="load-libraries"><strong>Load libraries</strong><a class="headerlink" href="#load-libraries" title="Permanent link">&para;</a></h4>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">ee</span>
-<span class="kn">import</span> <span class="nn">satcube</span>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span><span class="w"> </span><span class="nn">ee</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">satcube</span>
 </code></pre></div>
 <h4 id="authenticate-and-initialize-earth-engine"><strong>Authenticate and initialize earth engine</strong><a class="headerlink" href="#authenticate-and-initialize-earth-engine" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><span class="n">ee</span><span class="o">.</span><span class="n">Authenticate</span><span class="p">()</span>
@@ -713,10 +713,10 @@
 </code></pre></div>
 <h4 id="create-a-gif"><strong>Create a GIF</strong><a class="headerlink" href="#create-a-gif" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><span class="c1"># !apt-get install imagemagick</span>
-<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s2">&quot;convert -delay 20 -loop 0 wendy01/z_s2_07_smoothed_png/temp_07*.png animation.gif&quot;</span><span class="p">)</span>
 
-<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">IPython.display</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
 <span class="n">Image</span><span class="p">(</span><span class="n">filename</span><span class="o">=</span><span class="s1">&#39;animation.gif&#39;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
 </code></pre></div>
 <p align="center">

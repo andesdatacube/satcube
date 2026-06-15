@@ -8,10 +8,9 @@ new_main.py
 __pycache__/
 *.py[cod]
 *$py.class
-
 # C extensions
 *.so
-
+test_*/
 # Distribution / packaging
 .Python
 build/
@@ -20,6 +19,12 @@ dist/
 downloads/
 eggs/
 .eggs/
+antamina_raw/
+course_adc_v2.ipynb
+course_adc.ipynb
+esqueleto_curso.md
+example.ipynb
+example.py
 lib/
 lib64/
 parts/

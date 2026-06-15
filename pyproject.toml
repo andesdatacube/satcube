@@ -1,116 +1,75 @@
 [tool.poetry]
-name = "satcube"
-version = "0.1.0"
+name    = "satcube"
+version = "0.1.32"
 description = "A Python package to create cloud-free monthly composites by fusing Landsat and Sentinel-2 data."
-authors = ["Cesar Aybar <fcesar.aybar@uv.es>"]
-repository = "https://github.com/IPL-UV/satcube"
-documentation = "https://ipl-uv.github.io/satcube/"
-readme = "README.md"
-packages = [
-  {include = "satcube"}
-]
+authors = ["Julio Contreras <julio.uv.es>"]
+repository     = "https://github.com/IPL-UV/satcube"
+documentation  = "https://ipl-uv.github.io/satcube/"
+readme         = "README.md"
+packages       = [{ include = "satcube" }]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<4.0"
-fastcubo = ">=0.0.999"
-torch = ">=2.0.0"
-pandas = ">=2.0.0"
-pydantic = ">=2.8.0"
-earthengine-api = ">=0.1.4.0"
-matplotlib = ">=3.7.0"
-numpy = ">=1.25.0"
-phicloudmask = ">=0.0.2"
-rasterio = ">=1.2.0"
-requests = ">=2.26.0"
-satalign = ">=0.0.999"
-scikit-learn = ">=1.2.0"
-segmentation-models-pytorch = ">=0.2.0"
-xarray = ">=2023.7.0"
+python          = ">=3.10,<4.0"
+cubexpress      = ">=0.2.2"
+mlstac          = ">=0.4.5"
+satalign        = ">=0.1.16"
+torch           = ">=2.0.0"
+tqdm            = ">=4.67.1"
+phicloudmask    = ">=0.0.2"
+segmentation-models-pytorch = ">=0.3.0"
+sen2sr          = ">=0.8.5"
+numpy           = ">=1.24,<2.4"
+pandas          = ">=1.5.0"
+rasterio        = ">=1.3.0"
+scipy           = ">=1.11.0"
+opencv-python-headless = ">=4.8.0"
 
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.2.0"
-pytest-cov = "^4.0.0"
-deptry = "^0.12.0"
-mypy = "^1.5.1"
-pre-commit = "^3.4.0"
-tox = "^4.11.1"
+[tool.poetry.extras]
+full = ["torch"]
 
-[tool.poetry.group.docs.dependencies]
-mkdocs = "^1.4.2"
-mkdocs-material = "^9.2.7"
-mkdocstrings = {extras = ["python"], version = "^0.23.0"}
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
+# --- tooling fixes ----------------------------------------------------------
 [tool.mypy]
-files = ["satcube"]
-disallow_untyped_defs = "True"
-disallow_any_unimported = "True"
-no_implicit_optional = "True"
-check_untyped_defs = "True"
-warn_return_any = "True"
-warn_unused_ignores = "True"
-show_error_codes = "True"
+files                   = ["satcube"]
+disallow_untyped_defs   = true
+disallow_any_unimported = true
+no_implicit_optional    = true
+check_untyped_defs      = true
+warn_return_any         = true
+warn_unused_ignores     = true
+show_error_codes        = true
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+fix = true
+
+[tool.ruff.lint]
+select = ["YTT","S","B","A","C4","T10","SIM","I","C90","E","W","F","PGH","UP","RUF","TRY"]
+ignore = [
+    "E501",   
+    "E731",   
+    "RUF002", 
+    "SIM108", 
+    "RUF059", 
+    "TRY003", 
+    "C901",   
+    "TRY300", 
+    "S112",   
+    "S110",   
+    "SIM101", 
+    "S101",   
+    "RUF003", 
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401", "E402"]  
+"_quiet.py" = ["E402"]            
+"utils.py" = ["S101"]             
+
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-
-[tool.ruff]
-target-version = "py37"
-line-length = 120
-fix = true
-select = [
-    # flake8-2020
-    "YTT",
-    # flake8-bandit
-    "S",
-    # flake8-bugbear
-    "B",
-    # flake8-builtins
-    "A",
-    # flake8-comprehensions
-    "C4",
-    # flake8-debugger
-    "T10",
-    # flake8-simplify
-    "SIM",
-    # isort
-    "I",
-    # mccabe
-    "C90",
-    # pycodestyle
-    "E", "W",
-    # pyflakes
-    "F",
-    # pygrep-hooks
-    "PGH",
-    # pyupgrade
-    "UP",
-    # ruff
-    "RUF",
-    # tryceratops
-    "TRY",
+markers = [
+    "needs_ee: test requires a live Earth Engine connection",
 ]
-ignore = [
-    # LineTooLong
-    "E501",
-    # DoNotAssignLambda
-    "E731",
-]
-
-[tool.ruff.format]
-preview = true
-
-[tool.coverage.report]
-skip_empty = true
-
-[tool.coverage.run]
-branch = true
-source = ["satcube"]
-
-
-[tool.ruff.per-file-ignores]
-"tests/*" = ["S101"]

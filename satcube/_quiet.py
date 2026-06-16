@@ -10,6 +10,7 @@ Silences:
   • Kornia/LightGlue deprecation warnings
   • HuggingFace token warnings
   • tqdm nested loop warnings
+  • Earth Engine 429 retry warnings (googleapiclient)
 
 Works by:
   1. Setting environment variables BEFORE any imports
@@ -80,6 +81,8 @@ for logger_name in [
     "shapely",
     "urllib3",
     "requests",
+    "googleapiclient.http",   # Earth Engine 429 retry warnings
+    "googleapiclient",
     "numba",
     "kornia",
     "lightglue",

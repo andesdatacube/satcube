@@ -324,6 +324,7 @@ class SatCubeMetadata:
         output_dir: str | pathlib.Path = "monthly_composites",
         agg_method: str = "median",
         num_workers: int | None = None,
+        cache=False,
         quiet: bool = False,
     ) -> SatCubeMetadata:
         """
@@ -375,6 +376,7 @@ class SatCubeMetadata:
             output_dir=output_dir,
             agg_method=agg_method,
             num_workers=num_workers,
+            cache=cache,
             quiet=quiet,
         )
 
@@ -390,6 +392,7 @@ class SatCubeMetadata:
         despike_threshold: float = 0.15,
         num_workers: int | None = None,
         chunk_size: int = 512,
+        cache: bool = False,
         quiet: bool = False,
     ) -> SatCubeMetadata:
         """
@@ -451,6 +454,7 @@ class SatCubeMetadata:
             despike_threshold=despike_threshold,
             num_workers=num_workers,
             chunk_size=chunk_size,
+            cache=cache,
             quiet=quiet,
         )
 
@@ -464,6 +468,7 @@ class SatCubeMetadata:
         smooth_p: int = 2,
         num_workers: int | None = None,
         chunk_size: int = 512,
+        cache: bool = False,
         quiet: bool = False,
     ) -> SatCubeMetadata:
         """
@@ -531,6 +536,7 @@ class SatCubeMetadata:
             smooth_p=smooth_p,
             num_workers=num_workers,
             chunk_size=chunk_size,
+            cache=cache,
             quiet=quiet,
         )
 

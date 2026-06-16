@@ -253,7 +253,11 @@ def infer_cloudmask_batched(
                 preds = preds.squeeze(1)
 
             B = preds.size(0)
-            batch_weights = window_tensor.unsqueeze(0).repeat(B, 1, 1)
+            # The compiled model may return preds on a different device than the
+            # input, so align the blend weights to where preds actually lives.
+            # This is what makes both device="cpu" and device="cuda" work.
+            weights = window_tensor.to(preds.device)
+            batch_weights = weights.unsqueeze(0).repeat(B, 1, 1)
             preds_weighted = preds.float() * batch_weights
 
             preds_cpu = preds_weighted.cpu().numpy()

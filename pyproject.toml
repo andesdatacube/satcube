@@ -1,6 +1,6 @@
 [tool.poetry]
 name    = "satcube"
-version = "0.1.40"
+version = "0.1.41"
 description = "A Python package to create cloud-free monthly composites by fusing Landsat and Sentinel-2 data."
 authors = ["Julio Contreras <fcesar.aybar@uv.es>"]
 repository     = "https://github.com/IPL-UV/satcube"

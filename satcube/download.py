@@ -48,6 +48,8 @@ def metadata(
     end: str | None = None,
     max_cloud: float = 100.0,
     mosaic: bool = True,
+    score_nworkers: int = 8,
+    score_batch: int = 25,
 ) -> SatCubeMetadata:
     """Discover Sentinel-2 imagery over a patch, scored by cloud percentage.
 
@@ -75,7 +77,12 @@ def metadata(
     if mosaic:
         table = table.mosaic(by="date")
 
-    scored = cubexpress.add_metrics(table, score_fn=_cloud_score)
+    scored = cubexpress.add_metrics(
+        table,
+        score_fn=_cloud_score,
+        nworkers=score_nworkers,
+        batch_size=score_batch,
+    )
 
     kept = scored[scored.df["score"] <= max_cloud]
 

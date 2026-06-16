@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import pathlib
+import shutil
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Literal
 
+import cv2
 import numpy as np
 import pandas as pd
 import rasterio as rio
-from scipy.interpolate import griddata
 from scipy.ndimage import binary_dilation, distance_transform_edt, label
 from tqdm import tqdm
 
@@ -16,6 +17,44 @@ from satcube.logging_config import setup_logger
 logger = setup_logger(__name__)
 
 _GAP_METHOD = Literal["histogram_matching", "linear"]
+
+
+def _load_ref(path: pathlib.Path, cache: dict) -> tuple[np.ndarray, np.ndarray]:
+    """Read a reference image once and cache it for reuse across holes.
+
+    Returns the reflectance array (with invalid pixels as nan) and its 2D
+    valid mask. Caching avoids re-reading the same neighbor from disk for
+    every hole in the target image.
+    """
+    if path in cache:
+        return cache[path]
+
+    with rio.open(path) as src:
+        ref = src.read() / 1e4
+    ref[(ref <= 0) | (ref > 1.0)] = np.nan
+    valid = ~np.isnan(ref).any(axis=0)
+    cache[path] = (ref, valid)
+    return cache[path]
+
+
+def _inpaint_bands(data: np.ndarray, bad_2d: np.ndarray, radius: int = 3) -> np.ndarray:
+    """Smoothly fill the remaining bad pixels of each band with cv2 Telea.
+
+    cv2.inpaint only supports 8-bit, so we scale to uint8 and back. That is
+    fine here because this is the last-resort fill on the few pixels temporal
+    matching could not cover, and the monthly median composite smooths it out.
+    Replaces nearest-neighbor griddata, which left visible blocky patches.
+    """
+    mask = bad_2d.astype(np.uint8)
+    out = data.copy()
+    for b in range(data.shape[0]):
+        band = np.nan_to_num(data[b], nan=0.0)
+        band = np.clip(band, 0.0, 1.0)
+        band_u8 = (band * 255.0).astype(np.uint8)
+        filled_u8 = cv2.inpaint(band_u8, mask, radius, cv2.INPAINT_TELEA)
+        filled = filled_u8.astype(np.float32) / 255.0
+        out[b][bad_2d] = filled[bad_2d]
+    return out
 
 
 def _fill_one(
@@ -32,15 +71,14 @@ def _fill_one(
     """
     Fill gaps in a single image using temporal neighbors with BEST match selection.
 
-    New strategy:
-        - Evaluates up to 10 temporal neighbors (not just first valid one)
-        - Selects the reference with LOWEST color matching error
-        - Falls back to more distant images if needed
+    Strategy:
+        - Treats each hole (connected component) independently.
+        - Evaluates up to 10 temporal neighbors and picks the LOWEST color error.
+        - Blends the chosen patch with a distance-based feather.
+        - Optional final inpainting (cv2 Telea) for anything left.
 
-    Binary dilation parameters:
-        - target_hole (iterations=25): Expanded from 20 to cover larger affected areas
-        - hole_expanded (iterations=12): Expanded from 10 for wider search
-        - local_context (iterations=25): Expanded from 20 for better histogram matching
+    Reference images are read once and cached, so a target with many holes does
+    not re-read the same neighbors from disk per hole.
     """
 
     with rio.open(img_path) as src:
@@ -60,11 +98,12 @@ def _fill_one(
     labeled_array, num_features = label(base_missing_mask)
     idxs = np.argsort(np.abs(dates - this_date))
 
-    # NEW: Process each hole independently
+    # Cache of reference reads, reused across all holes in this image.
+    ref_cache: dict = {}
+
     for region_idx in range(1, num_features + 1):
 
         current_region_mask = labeled_array == region_idx
-        # Increased from 20 to 25 iterations for better coverage
         target_hole = binary_dilation(current_region_mask, iterations=10)
 
         still_missing = np.isnan(final_data).any(axis=0)
@@ -73,9 +112,8 @@ def _fill_one(
         if target_hole.sum() == 0:
             continue
 
-        # NEW: Collect multiple candidates instead of using first valid one
         candidates = []
-        max_candidates = 10  # Evaluate up to 10 temporal neighbors
+        max_candidates = 10
 
         for i in idxs:
             if len(candidates) >= max_candidates:
@@ -86,26 +124,19 @@ def _fill_one(
                 continue
 
             try:
-                with rio.open(ref_path) as src:
-                    ref = src.read() / 1e4
-                    ref_invalid = (ref <= 0) | (ref > 1.0)
-                    ref[ref_invalid] = np.nan
-                    ref_valid_mask = ~np.isnan(ref).any(axis=0)
+                ref, ref_valid_mask = _load_ref(ref_path, ref_cache)
             except Exception:
                 continue
 
-            # Increased from 10 to 12 iterations
             hole_expanded = binary_dilation(target_hole, iterations=5)
             fillable_mask = hole_expanded & ref_valid_mask
 
             intersection = fillable_mask & target_hole
             coverage = intersection.sum() / (target_hole.sum() + 1e-6)
 
-            # Lowered threshold from 0.90 to 0.85 to accept more candidates
             if coverage < 0.85:
                 continue
 
-            # Increased from 20 to 25 iterations
             local_context = binary_dilation(fillable_mask, iterations=15)
             valid_in_target = ~np.isnan(final_data).any(axis=0)
             training_mask = valid_in_target & ref_valid_mask & local_context
@@ -169,10 +200,8 @@ def _fill_one(
 
             current_metric = patch_error / len(rgb_bands)
 
-            # NEW: Store candidate with its error score
             candidates.append(
                 {
-                    "ref": ref,
                     "filled_patch": filled_patch,
                     "fillable_mask": fillable_mask,
                     "error": current_metric,
@@ -180,19 +209,15 @@ def _fill_one(
                 }
             )
 
-        # Select BEST candidate (lowest error)
         if len(candidates) == 0:
             continue
 
-        # Sort by error (ascending) - best candidate first
         candidates.sort(key=lambda x: x["error"])
         best = candidates[0]
 
-        # Only use if error is acceptable
         if best["error"] > threshold:
             continue
 
-        # Apply the BEST candidate
         dist_map = distance_transform_edt(best["fillable_mask"])
         alpha = np.clip(dist_map / 5.0, 0, 1)
 
@@ -211,25 +236,11 @@ def _fill_one(
 
             final_data[b][best["fillable_mask"]] = blended
 
-    # Rest remains the same (inpainting, etc.)
     if enable_inpainting:
         bad_mask = np.isnan(final_data) | (final_data <= 0.00005) | (final_data > 1.0)
         bad_2d = bad_mask.any(axis=0)
-
         if bad_2d.sum() > 0:
-            valid_2d = ~bad_2d
-            if valid_2d.sum() > 0:
-                y_v, x_v = np.where(valid_2d)
-                pts = np.column_stack((y_v, x_v))
-                y_b, x_b = np.where(bad_2d)
-
-                for b in range(data.shape[0]):
-                    vals = final_data[b][valid_2d]
-                    try:
-                        fill = griddata(pts, vals, (y_b, x_b), method="nearest")
-                        final_data[b][bad_2d] = np.clip(fill, 0.0, 1.0)
-                    except Exception:
-                        pass
+            final_data = _inpaint_bands(final_data, bad_2d, radius=3)
 
     _save_image(final_data, out_dir / img_path.name, prof)
 
@@ -241,71 +252,8 @@ def _fill_one(
     return img_path.stem, remaining_gaps_pct
 
 
-def _fill_image_complete(
-    img_idx: int,
-    img_paths: list[pathlib.Path],
-    filled_paths: list[pathlib.Path],
-    dates: np.ndarray,
-    rounds: list[dict],
-    method: str,
-    output_dir: pathlib.Path,
-) -> tuple[str, float]:
-    """
-    Execute all 3 rounds for a single image.
-
-    Args:
-        img_idx: Index of the image to process.
-        img_paths: List of all input image paths.
-        filled_paths: List of all output image paths.
-        dates: Array of dates for all images.
-        rounds: List of round configurations.
-        method: Color transfer method.
-        output_dir: Output directory.
-
-    Returns:
-        Tuple of (image_id, remaining_gaps_pct_after_round1).
-    """
-    img_path = img_paths[img_idx]
-    remaining_gaps_pct = 0.0
-
-    try:
-        for r_idx, r_data in enumerate(rounds):
-            src_img = r_data["src"][img_idx]
-            if not src_img.exists():
-                src_img = img_paths[img_idx]
-
-            refs = img_paths if r_idx == 0 else filled_paths
-
-            _, gaps_pct = _fill_one(
-                img_path=src_img,
-                ref_paths=refs,
-                dates=dates,
-                this_date=dates[img_idx],
-                method=method,
-                out_dir=output_dir,
-                threshold=r_data["thresh"],
-                enable_inpainting=r_data["inpaint"],
-            )
-
-            if r_idx == 0:
-                remaining_gaps_pct = gaps_pct
-
-        return img_path.stem, remaining_gaps_pct
-
-    except Exception:
-        logger.exception(f"Failed to fill {img_path.stem}")
-        return img_path.stem, 100.0
-
-
 def _save_image(data: np.ndarray, path: pathlib.Path, profile: dict) -> None:
-    """
-    Save processed image array to GeoTIFF.
-
-    Args:
-        data: Image array in float32 [0-1] range.
-        path: Output file path.
-        profile: Rasterio profile for metadata.
-    """
+    """Save processed image array to GeoTIFF."""
     data = np.nan_to_num(data, nan=0.0)
     data = np.clip(data, 0.0, 1.0)
     data_uint = (data * 1e4).astype(np.uint16)
@@ -331,99 +279,115 @@ def gapfill_fn(
     quiet: bool = False,
 ) -> pd.DataFrame:
     """
-    Fill cloud/shadow gaps using multi-round temporal matching with parallel processing.
+    Fill cloud/shadow gaps using multi-round temporal matching.
 
-    Implements a sophisticated 3-round cascading strategy:
-        1. **Strict Round** (threshold=0.15): High-quality matches only, no inpainting
-        2. **Relaxed Round** (threshold=0.40): More tolerant matches for remaining gaps
-        3. **Final Round** (threshold=∞): Inpainting for any remaining pixels
+    Three cascading rounds, run with a barrier between them so each round reads
+    the PREVIOUS round's outputs and writes its OWN, never a file another worker
+    is writing (this is the deterministic, race-free version):
+        1. Strict  (threshold=0.15): high-quality matches only, no inpainting.
+        2. Relaxed (threshold=0.40): more tolerant matches for remaining gaps.
+        3. Final   (threshold=inf): cv2 Telea inpainting for anything left.
 
-    Each gap is treated as an independent component, preventing artifacts from
-    distant cloud regions merging together. Uses histogram matching for accurate
-    color transfer and spatial blending for seamless transitions.
-
-    **Binary dilation strategy:**
-        - 20 iterations (~200m): Expand holes to cover hidden affected areas
-        - 10 iterations (~100m): Search for reference pixels near holes
-        - 20 iterations (~200m): Create training region for histogram matching
+    Each gap is treated as an independent component. Histogram matching gives
+    accurate color transfer; a distance feather blends the seams.
 
     Args:
-        metadata: DataFrame with scene metadata (must contain 'id' and 'date' columns).
+        metadata: DataFrame with scene metadata (needs 'id' and 'date' columns).
         input_dir: Directory containing input GeoTIFF files.
         output_dir: Output directory for gap-filled images. Default "gapfilled".
-        method: Color transfer method. Options:
-            - 'histogram_matching': Match full histogram distribution (recommended)
-            - 'linear': Simple linear regression
-        num_workers: Number of images to process in parallel. If None, auto-detects
-            optimal value (typically equal to CPU cores, capped at 8). Default None.
+        method: 'histogram_matching' (recommended) or 'linear'.
+        num_workers: Images processed in parallel per round. If None, auto-detects
+            (CPU cores, capped at 8).
         quiet: Suppress progress bars. Default False.
 
     Returns:
-        Updated metadata DataFrame with 'remaining_gaps_pct' column showing the
-        percentage of pixels that could not be filled via strict temporal matching (0-100).
+        Updated metadata with 'remaining_gaps_pct' (percent of pixels the STRICT
+        round could not fill via temporal matching, 0-100).
 
     Examples:
         >>> filled = gapfill_fn(metadata=meta, input_dir="masked")
-
-        >>> # Filter by quality
-        >>> filled = filled[filled["remaining_gaps_pct"] < 10.0]
+        >>> filled = filled[filled["remaining_gaps_pct"] < 1.0]
     """
-
     input_dir = pathlib.Path(input_dir).expanduser().resolve()
     output_dir = pathlib.Path(output_dir).expanduser().resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    img_paths = [input_dir / f"{i}.tif" for i in metadata["id"]]
-    filled_paths = [output_dir / f"{i}.tif" for i in metadata["id"]]
+    ids = list(metadata["id"])
     dates = pd.to_datetime(metadata["date"]).to_numpy()
+    n = len(ids)
 
     if num_workers is None:
         num_workers = _get_optimal_gapfill_workers()
 
+    # Separate dir per round so reads (previous round) and writes (current round)
+    # never touch the same file. Cleaned up at the end.
+    r0_dir = output_dir / "_round0"
+    r1_dir = output_dir / "_round1"
+    r0_dir.mkdir(parents=True, exist_ok=True)
+    r1_dir.mkdir(parents=True, exist_ok=True)
+
     rounds = [
-        {"name": "Strict", "thresh": 0.15, "inpaint": False, "src": img_paths},
-        {"name": "Relaxed", "thresh": 0.40, "inpaint": False, "src": filled_paths},
-        {"name": "Final", "thresh": 100.0, "inpaint": True, "src": filled_paths},
+        {"name": "Strict", "thresh": 0.15, "inpaint": False, "in": input_dir, "out": r0_dir},
+        {"name": "Relaxed", "thresh": 0.40, "inpaint": False, "in": r0_dir, "out": r1_dir},
+        {"name": "Final", "thresh": 100.0, "inpaint": True, "in": r1_dir, "out": output_dir},
     ]
 
-    results = []
+    strict_gaps: dict[str, float] = {}
 
-    with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        futures = {
-            executor.submit(
-                _fill_image_complete,
-                img_idx=i,
-                img_paths=img_paths,
-                filled_paths=filled_paths,
-                dates=dates,
-                rounds=rounds,
-                method=method,
-                output_dir=output_dir,
-            ): i
-            for i in range(len(img_paths))
-        }
+    for r_idx, r in enumerate(rounds):
+        in_dir = r["in"]
+        out_dir = r["out"]
+        ref_paths = [in_dir / f"{i}.tif" for i in ids]
 
-        for future in tqdm(
-            as_completed(futures),
-            total=len(futures),
-            desc="Gap filling",
-            unit="image",
-            disable=quiet,
-        ):
-            img_idx = futures[future]
-            try:
-                img_id, remaining_gaps_pct = future.result()
-                results.append({"id": img_id, "remaining_gaps_pct": remaining_gaps_pct})
-            except Exception:
-                logger.exception(f"Unexpected error for image {img_idx}")
-                results.append(
-                    {"id": img_paths[img_idx].stem, "remaining_gaps_pct": 100.0}
-                )
+        src_paths = []
+        for i in ids:
+            p = in_dir / f"{i}.tif"
+            if not p.exists():
+                p = input_dir / f"{i}.tif"  # fall back to raw if a round dropped one
+            src_paths.append(p)
+
+        with ThreadPoolExecutor(max_workers=num_workers) as executor:
+            futures = {
+                executor.submit(
+                    _fill_one,
+                    img_path=src_paths[k],
+                    ref_paths=ref_paths,
+                    dates=dates,
+                    this_date=dates[k],
+                    method=method,
+                    out_dir=out_dir,
+                    threshold=r["thresh"],
+                    enable_inpainting=r["inpaint"],
+                ): k
+                for k in range(n)
+            }
+
+            for future in tqdm(
+                as_completed(futures),
+                total=n,
+                desc=f"Gap filling ({r['name']})",
+                unit="image",
+                disable=quiet,
+            ):
+                k = futures[future]
+                try:
+                    img_id, gaps_pct = future.result()
+                except Exception:
+                    logger.exception(f"Failed {r['name']} round for {ids[k]}")
+                    img_id, gaps_pct = ids[k], 100.0
+
+                if r_idx == 0:
+                    strict_gaps[img_id] = gaps_pct
+
+    shutil.rmtree(r0_dir, ignore_errors=True)
+    shutil.rmtree(r1_dir, ignore_errors=True)
 
     if not quiet:
-        logger.info(f"✓ Gap filled {len(img_paths)} images")
+        logger.info(f"✓ Gap filled {n} images")
 
-    results_df = pd.DataFrame(results)
+    results_df = pd.DataFrame(
+        [{"id": i, "remaining_gaps_pct": strict_gaps.get(i, 100.0)} for i in ids]
+    )
 
     metadata = metadata.drop(columns=["remaining_gaps_pct"], errors="ignore")
     metadata = metadata.merge(results_df, on="id", how="left")

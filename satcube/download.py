@@ -90,11 +90,10 @@ def metadata_polygon(
     scale: float = 10,
     start: str = "2015-01-01",
     end: str | None = None,
-    min_score: float = 0.0,
-    max_score: float = 100.0,
+    max_cloud: float = 100.0,
     mosaic: bool = True,
 ) -> SatCubeMetadata:
-    """Discover Sentinel-2 imagery over a single polygon and score it.
+    """Discover Sentinel-2 imagery over a single polygon, scored by cloud percentage.
 
     Accepts one polygon as a shapely Polygon, a WKT string, or a GeoJSON dict
     (geometry, Feature, or single-feature FeatureCollection). MultiPolygons are
@@ -106,12 +105,12 @@ def metadata_polygon(
         scale: Meters per pixel (Sentinel-2 native = 10).
         start: Start date 'YYYY-MM-DD'.
         end: End date 'YYYY-MM-DD'. If None, defaults to yesterday.
-        min_score: Keep rows whose clear score (0-100) is >= this.
-        max_score: Keep rows whose clear score (0-100) is <= this.
+        max_cloud: Keep scenes whose cloud percentage (0-100) is <= this.
+            0 keeps only perfectly clear scenes; 100 keeps everything. Default 100.
         mosaic: If True, one image per date before scoring. Default True.
 
     Returns:
-        SatCubeMetadata with id, image, date, coverage_pct, score.
+        SatCubeMetadata with id, image, date, coverage_pct, score (score = % cloud).
 
     Raises:
         ValueError: if the geometry is a MultiPolygon with several parts.
@@ -141,9 +140,7 @@ def metadata_polygon(
         table = table.mosaic(by="date")
 
     scored = cubexpress.add_metrics(table, score_fn=_cloud_score)
-    kept = scored[
-        (scored.df["score"] >= min_score) & (scored.df["score"] <= max_score)
-    ]
+    kept = scored[scored.df["score"] <= max_cloud]
 
     sat = SatCubeMetadata(df=kept.df.copy().reset_index(drop=True))
     sat._table = kept

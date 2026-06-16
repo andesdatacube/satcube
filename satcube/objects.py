@@ -88,6 +88,43 @@ class SatCubeMetadata:
         return cls(df=df, raw_dir=raw_dir, _current_dir=directory)
 
 
+    def select_bands(self, *bands: str) -> SatCubeMetadata:
+        """Keep only the given bands (in order) before downloading.
+
+        Delegates to cubexpress's RequestTable.select_bands. The output band
+        order matches the order you pass here. Immutable: returns a new
+        SatCubeMetadata; the original is unchanged.
+
+        Args:
+            *bands: Band names to keep, in the desired output order
+                (e.g. "B4", "B3", "B2" for RGB).
+
+        Returns:
+            New SatCubeMetadata carrying only the selected bands.
+
+        Raises:
+            ValueError: if there is no RequestTable (metadata came from disk),
+                or a requested band is not available.
+
+        Examples:
+            >>> meta_rgb = meta.select_bands("B4", "B3", "B2")   # RGB only
+            >>> cube = meta_rgb.download(output_dir="rgb")
+        """
+        if self._table is None:
+            raise ValueError(
+                "no RequestTable to select bands from; build it via satcube.metadata()."
+            )
+
+        new_table = self._table.select_bands(*bands)
+        instance = SatCubeMetadata(
+            df=self.df.copy().reset_index(drop=True),
+            raw_dir=self.raw_dir,
+            _current_dir=self._current_dir,
+        )
+        instance._table = new_table
+        return instance
+
+
     def download(
         self,
         output_dir: str = "raw",

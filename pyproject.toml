@@ -1,8 +1,8 @@
 [tool.poetry]
 name    = "satcube"
-version = "0.1.32"
+version = "0.1.35"
 description = "A Python package to create cloud-free monthly composites by fusing Landsat and Sentinel-2 data."
-authors = ["Julio Contreras <julio.uv.es>"]
+authors = ["Julio Contreras <fcesar.aybar@uv.es>"]
 repository     = "https://github.com/IPL-UV/satcube"
 documentation  = "https://ipl-uv.github.io/satcube/"
 readme         = "README.md"
@@ -10,12 +10,12 @@ packages       = [{ include = "satcube" }]
 
 [tool.poetry.dependencies]
 python          = ">=3.10,<4.0"
-cubexpress      = ">=0.2.2"
+cubexpress      = ">=0.2.7"
 mlstac          = ">=0.4.5"
 satalign        = ">=0.1.16"
 torch           = ">=2.0.0"
 tqdm            = ">=4.67.1"
-phicloudmask    = ">=0.0.2"
+phicloudmask    = ">=0.1.17"
 segmentation-models-pytorch = ">=0.3.0"
 sen2sr          = ">=0.8.5"
 numpy           = ">=1.24,<2.4"

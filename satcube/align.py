@@ -155,10 +155,13 @@ def align_fn(
     # Select reference image (clearest scene)
     if "clear_pct" in metadata.columns:
         id_reference = metadata.sort_values("clear_pct", ascending=False).iloc[0]["id"]
+    elif "score" in metadata.columns:
+        # score = cloud percentage (lower = clearer), so ascending picks the clearest
+        id_reference = metadata.sort_values("score", ascending=True).iloc[0]["id"]
     elif "cs_cdf" in metadata.columns:
         id_reference = metadata.sort_values("cs_cdf", ascending=False).iloc[0]["id"]
     else:
-        raise AlignmentError("Metadata must contain 'clear_pct' or 'cs_cdf' columns")
+        raise AlignmentError("Metadata must contain 'clear_pct', 'score', or 'cs_cdf'")
 
     df = metadata.copy()
 

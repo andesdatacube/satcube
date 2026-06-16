@@ -1,5 +1,11 @@
 docs/source
 cubexpress/
+mina_aligned/
+mina_masked/
+mina_raw/
+san_marcos_clip/
+san_marcos_rgb/
+SEN2CloudEnsemble/
 raw/
 new_main.py
 # From https://raw.githubusercontent.com/github/gitignore/main/Python.gitignore

@@ -129,19 +129,12 @@ class SatCubeMetadata:
         self,
         output_dir: str = "raw",
         num_workers: int = 8,
+        cache: bool = False,
     ) -> SatCubeMetadata:
         """Download the discovered scenes to disk as GeoTIFFs.
 
-        The scenes were already mosaicked (one per date) and scored in
-        satcube.metadata(), so this step only fetches the files and carries the
-        score/coverage_pct columns through.
-
-        Args:
-            output_dir: Directory for the downloaded .tif files. Default "raw".
-            num_workers: Parallel download workers. Default 8.
-
-        Returns:
-            New SatCubeMetadata pointing at the downloaded files.
+        With cache=True, skip the download when every scene already exists
+        on disk, so re-running a cell does not hit Earth Engine again.
         """
         output_dir = pathlib.Path(output_dir).resolve()
         output_dir.mkdir(parents=True, exist_ok=True)
@@ -151,10 +144,19 @@ class SatCubeMetadata:
                 "no RequestTable to download; build it via satcube.metadata()."
             )
 
-        cubexpress.express(self._table, output_dir, nworkers=num_workers)
-
-        # the df already carries id/date/score/coverage_pct from metadata()
         new_df = self.df.copy().reset_index(drop=True)
+
+        expected = {f"{row['id']}.tif" for _, row in new_df.iterrows()}
+        existing = {p.name for p in output_dir.glob("*.tif")}
+
+        if cache and expected and expected.issubset(existing):
+            instance = SatCubeMetadata(
+                df=new_df, raw_dir=output_dir, _current_dir=output_dir
+            )
+            instance._save_metadata()
+            return instance
+
+        cubexpress.express(self._table, output_dir, nworkers=num_workers)
 
         instance = SatCubeMetadata(
             df=new_df, raw_dir=output_dir, _current_dir=output_dir

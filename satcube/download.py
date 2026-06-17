@@ -1,82 +1,154 @@
+from __future__ import annotations
+
+from datetime import date, timedelta
+
 import ee
 import cubexpress
-import pathlib
-from typing import Optional
-from datetime import datetime
 
-def download_data(
+from satcube.objects import SatCubeMetadata
+
+
+def _cloud_score(image, geometry, source_ids=None):
+    """Cloud percentage over the ROI (0-100, higher = cloudier).
+
+    Uses CloudScore+ (cs_cdf): a pixel with cs_cdf >= 0.65 counts as clear.
+    Returns the percentage of CLOUDY pixels, so:
+        0   -> fully clear scene (ideal)
+        100 -> fully cloudy scene (unusable)
+    """
+    csplus = ee.ImageCollection("GOOGLE/CLOUD_SCORE_PLUS/V1/S2_HARMONIZED")
+    if source_ids is not None:
+        cs = (
+            csplus.filter(ee.Filter.inList("system:index", ee.List(source_ids)))
+            .select("cs_cdf")
+            .mosaic()
+        )
+    else:
+        cs = csplus.filter(
+            ee.Filter.eq("system:index", image.get("system:index"))
+        ).first()
+        cs = ee.Image(
+            ee.Algorithms.If(cs, cs, ee.Image.constant(0).rename("cs_cdf"))
+        ).select("cs_cdf")
+    frac_clear = cs.gte(0.65).reduceRegion(
+        reducer=ee.Reducer.mean(), geometry=geometry, scale=10, maxPixels=int(1e9)
+    ).get("cs_cdf")
+    frac_clear = ee.Number(ee.Algorithms.If(frac_clear, frac_clear, 0))
+    return ee.Number(1).subtract(frac_clear).multiply(100)   # % CLOUD
+
+
+def metadata(
     lon: float,
     lat: float,
-    cs_cdf: Optional[float] = 0.6,
-    buffer_size: Optional[int] = 1280,
-    start_date: Optional[str] = "2015-01-01",
-    end_date: Optional[str] = datetime.today().strftime('%Y-%m-%d'),
-    outfolder: Optional[str] = "raw/"
-) -> pathlib.Path:
-    """
-    Download Sentinel-2 imagery data using cubexpress and Earth Engine API.
+    width: int,
+    height: int,
+    *,
+    scale: float = 10,
+    start: str = "2015-01-01",
+    end: str | None = None,
+    max_cloud: float = 100.0,
+    mosaic: bool = True,
+    score_nworkers: int = 8,
+    score_batch: int = 25,
+) -> SatCubeMetadata:
+    """Discover Sentinel-2 imagery over a patch, scored by cloud percentage.
 
     Args:
-        lon (float): Longitude of the point of interest.
-        lat (float): Latitude of the point of interest.
-        cs_cdf (Optional[float]): Cloud mask threshold (default 0.6).
-        buffer_size (Optional[int]): Buffer size for image extraction (default 1280).
-        start_date (Optional[str]): Start date for image filtering (default "2015-01-01").
-        end_date (Optional[str]): End date for image filtering (default today’s date).
-        outfolder (Optional[str]): Output folder to save images (default "raw/").
+        lon: Patch center longitude (WGS-84 degrees).
+        lat: Patch center latitude (WGS-84 degrees).
+        width: Patch width in pixels.
+        height: Patch height in pixels.
+        scale: Meters per pixel (Sentinel-2 native = 10).
+        start: Start date 'YYYY-MM-DD'. Default '2015-01-01'.
+        end: End date 'YYYY-MM-DD'. If None, defaults to yesterday.
+        max_cloud: Keep scenes whose cloud percentage (0-100) is <= this.
+            0 keeps only perfectly clear scenes; 100 keeps everything. Default 100.
+        mosaic: If True, fuse same-date scenes before scoring. Default True.
 
     Returns:
-        pathlib.Path: Path to the folder where the data is stored.
+        SatCubeMetadata with id, image, date, coverage_pct, score (score = % cloud).
     """
-    
-    # Initialize Earth Engine
-    ee.Initialize(project="ee-julius013199")
+    if end is None:
+        end = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
 
-    # Define point of interest
-    point = ee.Geometry.Point([lon, lat])
-    
-    # Filter image collection by location and date
-    collection = ee.ImageCollection("COPERNICUS/S2_SR_HARMONIZED") \
-                    .filterBounds(point) \
-                    .filterDate(start_date, end_date)
+    rt = cubexpress.point_to_rt(lon=lon, lat=lat, width=width, height=height, scale=scale)
+    table = cubexpress.discover_images("COPERNICUS/S2_HARMONIZED", rt, start, end)
 
-    # Get image IDs
-    image_ids = collection.aggregate_array('system:id').getInfo()
-    
-    # Cloud mask function
-    def cloud_mask(image) -> ee.Image:
-        """Apply cloud mask to the image."""
-        return image.select('MSK_CLDPRB').lt(20)
+    if mosaic:
+        table = table.mosaic(by="date")
 
-    # Apply cloud mask
-    collection = collection.map(cloud_mask)
-    
-    # Generate geotransform for cubexpress
-    geotransform = cubexpress.lonlat2rt(lon=lon, lat=lat, edge_size=buffer_size, scale=10)
-
-    # Prepare requests for cubexpress
-    requests = [
-        cubexpress.Request(
-            id=f"s2test_{i}",
-            raster_transform=geotransform,
-            bands=["B4", "B3", "B2"],  # RGB bands
-            image=ee.Image(image_id).divide(10000)  # Adjust image scaling
-        )
-        for i, image_id in enumerate(image_ids)
-    ]
-    
-    # Create request set
-    cube_requests = cubexpress.RequestSet(requestset=requests)
-
-    # Set output folder
-    output_path = pathlib.Path(outfolder)
-
-    # Download the data
-    cubexpress.getcube(
-        request=cube_requests,
-        output_path=output_path,
-        nworkers=4,
-        max_deep_level=5
+    scored = cubexpress.add_metrics(
+        table,
+        score_fn=_cloud_score,
+        nworkers=score_nworkers,
+        batch_size=score_batch,
     )
-    
-    return output_path
+
+    kept = scored[scored.df["score"] <= max_cloud]
+
+    sat = SatCubeMetadata(df=kept.df.copy().reset_index(drop=True))
+    sat._table = kept
+    return sat
+
+
+def metadata_polygon(
+    geometry,
+    *,
+    scale: float = 10,
+    start: str = "2015-01-01",
+    end: str | None = None,
+    max_cloud: float = 100.0,
+    mosaic: bool = True,
+) -> SatCubeMetadata:
+    """Discover Sentinel-2 imagery over a single polygon, scored by cloud percentage.
+
+    Accepts one polygon as a shapely Polygon, a WKT string, or a GeoJSON dict
+    (geometry, Feature, or single-feature FeatureCollection). MultiPolygons are
+    accepted only when they have a single part; pass one polygon at a time if
+    you have several.
+
+    Args:
+        geometry: A single shapely Polygon, WKT string, or GeoJSON dict.
+        scale: Meters per pixel (Sentinel-2 native = 10).
+        start: Start date 'YYYY-MM-DD'.
+        end: End date 'YYYY-MM-DD'. If None, defaults to yesterday.
+        max_cloud: Keep scenes whose cloud percentage (0-100) is <= this.
+            0 keeps only perfectly clear scenes; 100 keeps everything. Default 100.
+        mosaic: If True, one image per date before scoring. Default True.
+
+    Returns:
+        SatCubeMetadata with id, image, date, coverage_pct, score (score = % cloud).
+
+    Raises:
+        ValueError: if the geometry is a MultiPolygon with several parts.
+    """
+    import shapely
+
+    if end is None:
+        end = (date.today() - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    poly = cubexpress.to_polygon(geometry)
+
+    if isinstance(poly, shapely.MultiPolygon):
+        parts = list(poly.geoms)
+        if len(parts) == 1:
+            poly = parts[0]
+        else:
+            raise ValueError(
+                f"satcube.metadata_polygon accepts a single polygon, but got a "
+                f"MultiPolygon with {len(parts)} parts. Pass one polygon at a time "
+                f"(e.g. loop over geometry.geoms)."
+            )
+
+    rt = cubexpress.polygon_to_rt(poly, scale=scale)
+    table = cubexpress.discover_images("COPERNICUS/S2_HARMONIZED", rt, start, end)
+
+    if mosaic:
+        table = table.mosaic(by="date")
+
+    scored = cubexpress.add_metrics(table, score_fn=_cloud_score)
+    kept = scored[scored.df["score"] <= max_cloud]
+
+    sat = SatCubeMetadata(df=kept.df.copy().reset_index(drop=True))
+    sat._table = kept
+    return sat

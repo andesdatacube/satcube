@@ -12,13 +12,13 @@
         <meta name="author" content="AndesDataCube">
       
       
-        <link rel="canonical" href="https://andesdatacube.github.io/satcube/CONTRIBUTING.html">
+        <link rel="canonical" href="https://andesdatacube.github.io/satcube/pipeline.html">
       
       
-        <link rel="prev" href="pipeline.html">
+        <link rel="prev" href="quickstart.html">
       
       
-        <link rel="next" href="CHANGELOG.html">
+        <link rel="next" href="CONTRIBUTING.html">
       
       
       <link rel="icon" href="https://huggingface.co/datasets/JulioContrerasH/DataMLSTAC/resolve/main/logo_satcube.png">
@@ -26,7 +26,7 @@
     
     
       
-        <title>Contributing - satcube</title>
+        <title>Pipeline - satcube</title>
       
     
     
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#contributing" class="md-skip">
+        <a href="#el-pipeline-por-dentro" class="md-skip">
           Skip to content
         </a>
       
@@ -113,7 +113,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Contributing
+              Pipeline
             
           </span>
         </div>
@@ -269,8 +269,10 @@
         
   
   
+    
   
-    <li class="md-tabs__item">
+  
+    <li class="md-tabs__item md-tabs__item--active">
       <a href="pipeline.html" class="md-tabs__link">
         
   
@@ -286,10 +288,8 @@
         
   
   
-    
   
-  
-    <li class="md-tabs__item md-tabs__item--active">
+    <li class="md-tabs__item">
       <a href="CONTRIBUTING.html" class="md-tabs__link">
         
   
@@ -444,26 +444,6 @@
       
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="pipeline.html" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Pipeline
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-    
-      
-      
-  
-  
     
   
   
@@ -480,18 +460,18 @@
           
   
   <span class="md-ellipsis">
-    Contributing
+    Pipeline
   </span>
   
 
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <a href="CONTRIBUTING.html" class="md-nav__link md-nav__link--active">
+      <a href="pipeline.html" class="md-nav__link md-nav__link--active">
         
   
   <span class="md-ellipsis">
-    Contributing
+    Pipeline
   </span>
   
 
@@ -513,18 +493,81 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#how-to-contribute" class="md-nav__link">
+  <a href="#1-metadata-y-descarga" class="md-nav__link">
     <span class="md-ellipsis">
-      How to contribute 🛠️
+      1. Metadata y descarga
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#types-of-contributions" class="md-nav__link">
+  <a href="#2-co-registro-sub-pixel-align" class="md-nav__link">
     <span class="md-ellipsis">
-      Types of contributions 📦
+      2. Co-registro sub-píxel (align)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-enmascarado-de-nubes-cloud_masking" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Enmascarado de nubes (cloud_masking)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-gap-filling-gapfill" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Gap-filling (gapfill)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-composites-mensuales-composite" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Composites mensuales (composite)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-interpolacion-interpolate" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Interpolación (interpolate)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-suavizado-smooth" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Suavizado (smooth)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-super-resolucion-superresolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Super-resolución (superresolve)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#todo-junto" class="md-nav__link">
+    <span class="md-ellipsis">
+      Todo junto
     </span>
   </a>
   
@@ -534,6 +577,26 @@
   
 </nav>
       
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="CONTRIBUTING.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributing
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -605,18 +668,81 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#how-to-contribute" class="md-nav__link">
+  <a href="#1-metadata-y-descarga" class="md-nav__link">
     <span class="md-ellipsis">
-      How to contribute 🛠️
+      1. Metadata y descarga
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#types-of-contributions" class="md-nav__link">
+  <a href="#2-co-registro-sub-pixel-align" class="md-nav__link">
     <span class="md-ellipsis">
-      Types of contributions 📦
+      2. Co-registro sub-píxel (align)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-enmascarado-de-nubes-cloud_masking" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Enmascarado de nubes (cloud_masking)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-gap-filling-gapfill" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Gap-filling (gapfill)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-composites-mensuales-composite" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Composites mensuales (composite)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-interpolacion-interpolate" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Interpolación (interpolate)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-suavizado-smooth" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Suavizado (smooth)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-super-resolucion-superresolve" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Super-resolución (superresolve)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#todo-junto" class="md-nav__link">
+    <span class="md-ellipsis">
+      Todo junto
     </span>
   </a>
   
@@ -640,66 +766,48 @@
   
 
 
-<h1 id="contributing"><strong>Contributing</strong> 🤝<a class="headerlink" href="#contributing" title="Permanent link">&para;</a></h1>
-<p>We welcome contributions from the community! Every contribution, no matter how small, is appreciated and credited. Here’s how you can get involved:</p>
-<h2 id="how-to-contribute"><strong>How to contribute</strong> 🛠️<a class="headerlink" href="#how-to-contribute" title="Permanent link">&para;</a></h2>
-<ol>
-<li><strong>Fork the repository:</strong> Start by forking the <a href="https://github.com/IPL-UV/satcube">satcube</a> repository to your GitHub account. 🍴</li>
-<li><strong>Clone your fork locally:</strong>
-    <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">cd</span><span class="w"> </span>&lt;directory_in_which_repo_should_be_created&gt;
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/IPL-UV/satcube.git
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="nb">cd</span><span class="w"> </span>satcube
-</code></pre></div></li>
-<li><strong>Create a branch:</strong> Create a new branch for your feature or bug fix:
-    <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>git<span class="w"> </span>checkout<span class="w"> </span>-b<span class="w"> </span>name-of-your-bugfix-or-feature
-</code></pre></div></li>
-<li><strong>Set up the environment:</strong> 🌱<ul>
-<li>If you're using <code>pyenv</code>, select a Python version:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pyenv<span class="w"> </span><span class="nb">local</span><span class="w"> </span>&lt;x.y.z&gt;
-</code></pre></div></li>
-<li>Install dependencies and activate the environment:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>poetry<span class="w"> </span>install
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>poetry<span class="w"> </span>shell
-</code></pre></div></li>
-<li>Install pre-commit hooks:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>poetry<span class="w"> </span>run<span class="w"> </span>pre-commit<span class="w"> </span>install
-</code></pre></div></li>
-</ul>
-</li>
-<li><strong>Make your changes:</strong> 🖋️ Develop your feature or fix, ensuring you write clear, concise commit messages and include any necessary tests.</li>
-<li><strong>Check your changes:</strong> ✅<ul>
-<li>Run formatting checks:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>make<span class="w"> </span>check
-</code></pre></div></li>
-<li>Run unit tests:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>make<span class="w"> </span><span class="nb">test</span>
-</code></pre></div></li>
-<li>Optionally, run tests across different Python versions using tox:
-   <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>tox
-</code></pre></div></li>
-</ul>
-</li>
-<li><strong>Submit a pull request:</strong> 🚀 Push your branch to GitHub and submit a pull request to the <code>develop</code> branch of the <code>satcube</code> repository. Ensure your pull request meets these guidelines:<ul>
-<li>Include tests.</li>
-<li>Update the documentation if your pull request adds functionality.</li>
-<li>Provide a detailed description of your changes.</li>
-</ul>
-</li>
-</ol>
-<h2 id="types-of-contributions"><strong>Types of contributions</strong> 📦<a class="headerlink" href="#types-of-contributions" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Report bugs:</strong> 🐛<ul>
-<li>Report bugs by creating an issue on the <a href="https://github.com/YOUR_GITHUB_USERNAME/satcube/issues">satcube GitHub repository</a>. Please include your operating system, setup details, and steps to reproduce the bug.</li>
-</ul>
-</li>
-<li><strong>Fix bugs:</strong> 🛠️ Look for issues tagged with "bug" and "help wanted" in the repository to start fixing.</li>
-<li><strong>Implement features:</strong> ✨ Contribute by implementing features tagged with "enhancement" and "help wanted."</li>
-<li><strong>Write documentation:</strong> 📚 Contribute to the documentation in the official docs, docstrings, or through blog posts and articles.</li>
-<li><strong>Submit feedback:</strong> 💬 Propose new features or give feedback by filing an issue on GitHub.<ul>
-<li>Use the <a href="https://github.com/YOUR_GITHUB_USERNAME/satcube/issues">satcube GitHub issues page</a> for feedback.</li>
-</ul>
-</li>
-</ul>
+<h1 id="el-pipeline-por-dentro">El pipeline por dentro<a class="headerlink" href="#el-pipeline-por-dentro" title="Permanent link">&para;</a></h1>
+<p>satcube encadena diez etapas. Cada método devuelve un nuevo objeto, así que puedes encadenarlos o pararte en cualquier punto. Aquí qué hace cada uno y por qué.</p>
+<h2 id="1-metadata-y-descarga">1. Metadata y descarga<a class="headerlink" href="#1-metadata-y-descarga" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">meta</span> <span class="o">=</span> <span class="n">satcube</span><span class="o">.</span><span class="n">metadata</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">start</span><span class="o">=...</span><span class="p">,</span> <span class="n">end</span><span class="o">=...</span><span class="p">,</span> <span class="n">max_cloud</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">meta</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">select_bands</span><span class="p">(</span><span class="s2">&quot;B1&quot;</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="s2">&quot;B12&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">cubo</span> <span class="o">=</span> <span class="n">meta</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;raw&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p><code>metadata</code> descubre las escenas Sentinel-2 sobre tu parche y las puntúa por nubosidad con CloudScore+ (de Google), de modo que <code>max_cloud</code> filtra <strong>antes</strong> de descargar. <code>select_bands</code> te deja bajar solo las bandas que usarás. <code>download</code> guarda un GeoTIFF por fecha.</p>
+<p>Para un polígono en vez de un punto, usa <code>metadata_polygon(geojson, ...)</code>.</p>
+<h2 id="2-co-registro-sub-pixel-align">2. Co-registro sub-píxel (<code>align</code>)<a class="headerlink" href="#2-co-registro-sub-pixel-align" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">alineado</span> <span class="o">=</span> <span class="n">cubo</span><span class="o">.</span><span class="n">align</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;aligned&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Imágenes de fechas distintas caen con desfases de fracciones de píxel. <code>align</code> elige la escena más limpia como referencia y co-registra el resto contra ella (Phase Cross-Correlation por defecto). Devuelve <code>dx_px</code> y <code>dy_px</code> por escena para que audites cuánto se movió cada una. Sin esto, los composites mezclan píxeles vecinos y la detección de cambios marca diferencias que no existen.</p>
+<h2 id="3-enmascarado-de-nubes-cloud_masking">3. Enmascarado de nubes (<code>cloud_masking</code>)<a class="headerlink" href="#3-enmascarado-de-nubes-cloud_masking" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">masked</span> <span class="o">=</span> <span class="n">alineado</span><span class="o">.</span><span class="n">cloud_masking</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;masked&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cuda&quot;</span><span class="p">,</span> <span class="n">save_mask</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">limpio</span> <span class="o">=</span> <span class="n">masked</span><span class="p">[</span><span class="n">masked</span><span class="p">[</span><span class="s2">&quot;clear_pct&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="mi">70</span><span class="p">]</span>
+</code></pre></div>
+<p>Aplica CloudSEN12 (deep learning) y clasifica cada píxel en despejado, nube delgada, sombra o nube gruesa. A diferencia del puntaje por escena, esto es una <strong>máscara píxel a píxel</strong>: sabe exactamente qué zonas descartar. Devuelve <code>clear_pct</code> por escena para que filtres las demasiado nubladas.</p>
+<h2 id="4-gap-filling-gapfill">4. Gap-filling (<code>gapfill</code>)<a class="headerlink" href="#4-gap-filling-gapfill" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">relleno</span>    <span class="o">=</span> <span class="n">limpio</span><span class="o">.</span><span class="n">gapfill</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;gapfilled&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">relleno_ok</span> <span class="o">=</span> <span class="n">relleno</span><span class="p">[</span><span class="n">relleno</span><span class="p">[</span><span class="s2">&quot;remaining_gaps_pct&quot;</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">]</span>
+</code></pre></div>
+<p>Rellena los huecos que dejaron las nubes trayendo información real de otras fechas. Por cada hueco evalúa hasta diez fechas vecinas y se queda con la de menor error de color, transfiere color con histogram matching y mezcla el borde con un degradado de distancia. Corre en tres rondas: estricta, relajada y un inpainting final para lo que ninguna fecha cubrió.</p>
+<p>Devuelve <code>remaining_gaps_pct</code>, que se mide <strong>al terminar la ronda estricta</strong>: es el porcentaje de píxeles que ningún match temporal de alta confianza pudo rellenar. Es un medidor de qué tan reconstruible era la escena con datos reales. Filtrar con <code>&lt;= 1.0</code> deja solo las escenas reconstruidas casi enteras a partir de fechas vecinas, no del inpainting.</p>
+<h2 id="5-composites-mensuales-composite">5. Composites mensuales (<code>composite</code>)<a class="headerlink" href="#5-composites-mensuales-composite" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">mensual</span> <span class="o">=</span> <span class="n">relleno_ok</span><span class="o">.</span><span class="n">composite</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;monthly&quot;</span><span class="p">,</span> <span class="n">agg_method</span><span class="o">=</span><span class="s2">&quot;median&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Agrupa las escenas de cada mes y toma la <strong>mediana</strong> píxel a píxel. La mediana es robusta a atípicos: una nube no detectada deja un píxel anormalmente brillante en una sola fecha, y la mediana lo descarta mientras el promedio lo arrastraría. En la práctica es un segundo filtro de nubes muy potente.</p>
+<h2 id="6-interpolacion-interpolate">6. Interpolación (<code>interpolate</code>)<a class="headerlink" href="#6-interpolacion-interpolate" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">interp</span> <span class="o">=</span> <span class="n">mensual</span><span class="o">.</span><span class="n">interpolate</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;interp&quot;</span><span class="p">,</span> <span class="n">despike_threshold</span><span class="o">=</span><span class="mf">0.15</span><span class="p">)</span>
+</code></pre></div>
+<p>Detecta saltos bruscos en la serie de cada píxel contra su mediana móvil de tres meses (nubes que se colaron), los marca y rellena por interpolación lineal en el tiempo. Sube <code>despike_threshold</code> si tienes eventos reales abruptos (incendios, inundaciones) que no quieres borrar.</p>
+<h2 id="7-suavizado-smooth">7. Suavizado (<code>smooth</code>)<a class="headerlink" href="#7-suavizado-smooth" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">suavizado</span> <span class="o">=</span> <span class="n">interp</span><span class="o">.</span><span class="n">smooth</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;smooth&quot;</span><span class="p">,</span> <span class="n">smooth_w</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">smooth_p</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div>
+<p>Savitzky-Golay sobre la anomalía: resta la climatología mensual, suaviza, y la vuelve a sumar, para no aplanar el ciclo estacional. Con un solo año es casi identidad; importa cuando tienes varios años y quieres quitar ruido inter-anual.</p>
+<h2 id="8-super-resolucion-superresolve">8. Super-resolución (<code>superresolve</code>)<a class="headerlink" href="#8-super-resolucion-superresolve" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">sr</span> <span class="o">=</span> <span class="n">suavizado</span><span class="o">.</span><span class="n">superresolve</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;sr&quot;</span><span class="p">,</span> <span class="n">variant</span><span class="o">=</span><span class="s2">&quot;SEN2SRLite&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;cuda&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Lleva la serie de 10 m a 2.5 m (aumento 4×) con SEN2SR. Toma las bandas que el modelo necesita y escribe la salida a alta resolución. <code>SEN2SRLite</code> es rápido y recomendado; <code>SEN2SR</code> es más pesado y de mejor calidad.</p>
+<h2 id="todo-junto">Todo junto<a class="headerlink" href="#todo-junto" title="Permanent link">&para;</a></h2>
+<p>Las ocho etapas (más re-alineación y filtros de calidad) están envueltas en <code>process_all</code>. Revisa el <a href="quickstart.html">Quickstart</a>.</p>
 
 
 

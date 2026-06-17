@@ -1,23 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://ipl-uv.github.io/satcube/index.html</loc>
-         <lastmod>2025-04-21</lastmod>
-         <changefreq>daily</changefreq>
+         <loc>https://andesdatacube.github.io/satcube/index.html</loc>
+         <lastmod>2026-06-17</lastmod>
     </url>
     <url>
-         <loc>https://ipl-uv.github.io/satcube/CHANGELOG.html</loc>
-         <lastmod>2025-04-21</lastmod>
-         <changefreq>daily</changefreq>
+         <loc>https://andesdatacube.github.io/satcube/CHANGELOG.html</loc>
+         <lastmod>2026-06-17</lastmod>
     </url>
     <url>
-         <loc>https://ipl-uv.github.io/satcube/CODE_OF_CONDUCT.html</loc>
-         <lastmod>2025-04-21</lastmod>
-         <changefreq>daily</changefreq>
+         <loc>https://andesdatacube.github.io/satcube/CODE_OF_CONDUCT.html</loc>
+         <lastmod>2026-06-17</lastmod>
     </url>
     <url>
-         <loc>https://ipl-uv.github.io/satcube/CONTRIBUTING.html</loc>
-         <lastmod>2025-04-21</lastmod>
-         <changefreq>daily</changefreq>
+         <loc>https://andesdatacube.github.io/satcube/CONTRIBUTING.html</loc>
+         <lastmod>2026-06-17</lastmod>
+    </url>
+    <url>
+         <loc>https://andesdatacube.github.io/satcube/installation.html</loc>
+         <lastmod>2026-06-17</lastmod>
+    </url>
+    <url>
+         <loc>https://andesdatacube.github.io/satcube/pipeline.html</loc>
+         <lastmod>2026-06-17</lastmod>
+    </url>
+    <url>
+         <loc>https://andesdatacube.github.io/satcube/quickstart.html</loc>
+         <lastmod>2026-06-17</lastmod>
     </url>
 </urlset>

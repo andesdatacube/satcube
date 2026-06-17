@@ -1,11 +1,11 @@
-# 
+# satcube
 
 <p align="center">
-  <img src="https://huggingface.co/datasets/JulioContrerasH/DataMLSTAC/resolve/main/banner_satcube.png" width="33%">
+  <img src="https://huggingface.co/datasets/JulioContrerasH/DataMLSTAC/resolve/main/banner_satcube.png" width="40%">
 </p>
 
 <p align="center">
-    <em>A Python package for managing Sentinel-2 satellite data cubes</em> 🚀
+    <em>De imágenes Sentinel-2 dispersas a cubos limpios, alineados y super-resueltos</em> 🛰️
 </p>
 
 <p align="center">
@@ -18,176 +18,117 @@
 <a href="https://github.com/psf/black" target="_blank">
     <img src="https://img.shields.io/badge/code%20style-black-000000.svg" alt="Black">
 </a>
-<a href="https://pycqa.github.io/isort/" target="_blank">
-    <img src="https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336" alt="isort">
-</a>
 </p>
 
 ---
 
-**GitHub**: [https://github.com/IPL-UV/satcube](https://github.com/IPL-UV/satcube) 🌐
+**GitHub**: [https://github.com/andesdatacube/satcube](https://github.com/andesdatacube/satcube) 🌐
 
 **PyPI**: [https://pypi.org/project/satcube/](https://pypi.org/project/satcube/) 🛠️
 
 ---
 
-## **Overview** 📊
+## Overview 📊
 
-**satcube** is a Python package designed for efficient management, processing, and analysis of Sentinel-2 satellite image cubes. It allows for downloading, cloud masking, gap filling, and super-resolving Sentinel-2 imagery, as well as creating monthly composites and performing interpolation.
+**satcube** convierte una serie de imágenes Sentinel-2 dispersas, tapadas por nubes y desalineadas en un **cubo mensual limpio, continuo y super-resuelto a 2.5 m**, con una API encadenable. Por dentro usa cubexpress para el acceso, CloudSEN12 para nubes, satalign para el co-registro y SEN2SR para la super-resolución.
 
-## **Key Features** ✨
-- **Satellite image download**: Retrieve Sentinel-2 images from Earth Engine efficiently. 🛰️
-- **Cloud masking**: Automatically remove clouds from Sentinel-2 images. ☁️
-- **Gap filling**: Fill missing data using methods like linear interpolation and histogram matching. 🧩
-- **Super-resolution**: Apply super-resolution models to enhance image quality. 🔍
-- **Monthly composites**: Aggregate images into monthly composites with various statistical methods. 📅
-- **Temporal smoothing**: Smooth reflectance values across time using interpolation techniques. 📈
-## **Installation** ⚙️
+<p align="center">
+  <img src="imgs/cube.gif" width="60%">
+</p>
 
-Install the latest version from PyPI:
+## Key features ✨
+- **Acceso inteligente**: descubre y descarga S2 filtrando por nubes antes de bajar. 🛰️
+- **Co-registro sub-píxel**: alinea toda la serie a la escena más limpia. 📐
+- **Enmascarado de nubes**: máscara píxel a píxel con deep learning (CloudSEN12). ☁️
+- **Reconstrucción temporal**: gap-filling, composites mensuales, despike e interpolación. 🧩
+- **Super-resolución 4×**: de 10 m a 2.5 m con SEN2SR. 🔍
+- **Un solo comando**: todo el pipeline con `process_all`. 🚀
+
+## Installation ⚙️
 
 ```bash
 pip install satcube
 ```
 
-## **How to use** 🛠️
+## Quickstart 🚀
 
-### **Basic usage: working with sentinel-2 data** 🌍
-
-#### **Load libraries**
+Todo el pipeline en una llamada, de crudo a cubo super-resuelto:
 
 ```python
 import ee
 import satcube
-```
 
-#### **Authenticate and initialize earth engine**
-
-```python
 ee.Authenticate()
-ee.Initialize(project="ee-csaybar-real")
-```
-#### **Download model weights**
-```python
-outpath = satcube.download_weights(path="weights")
-```
+ee.Initialize(project="ee-your-project")
 
-#### **Create a satellite dataCube**
-```python
-datacube = satcube.SatCube(
-    coordinates=(-77.68598590138802,-8.888223962022263),
-    sensor=satcube.Sentinel2(weight_path=outpath, edge_size=384),
-    output_dir="wendy01",
-    max_workers=12,
-    device="cuda",
+meta = satcube.metadata(
+    lon=-77.06165, lat=-9.53704,
+    width=256, height=256,
+    start="2018-01-01", end="2019-12-31",
+    max_cloud=30,
+).select_bands("B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B8A", "B9", "B10", "B11", "B12")
+
+crudo = meta.download(output_dir="produccion/raw")
+
+final = crudo.process_all(
+    output_dir="produccion",
+    min_clear_pct=70,
+    max_remaining_gaps=1.0,
+    device="cuda",          # usa "cpu" si no tienes GPU
+    sr_variant="SEN2SRLite",
 )
-```
-
-
-### **Query and process sentinel-2 data** 🛰️
-
-#### **Query the sentinel-2 image collection**
-
-```python
-# Query the Sentinel-2 image collection
-table_query = datacube.metadata_s2()
-
-# Filter images based on cloud cover and remove duplicates
-table_query_subset = table_query[table_query["cs_cdf"] > 0.30]
-table_query_subset = table_query_subset.drop_duplicates(subset="img_date")
-mgrs_tile_max = table_query_subset["mgrs_title"].value_counts().idxmax()
-table_query_subset = table_query_subset[table_query_subset["mgrs_title"] == mgrs_tile_max]
-```
-
-#### **Download sentinel-2 images**
-
-```python
-table_download = datacube.download_s2_image(table_query_subset)
-```
-#### **Cloud masking**
-
-```python
-# Remove clouds from the images
-table_nocloud = datacube.cloudmasking_s2(table_download)
-table_nocloud = table_nocloud[table_nocloud["cloud_cover"] < 0.75]
-table_nocloud.reset_index(drop=True, inplace=True)
-```
-
-#### **Gap filling**
-
-```python
-# Fill missing data in the images
-table_nogaps = datacube.gapfilling_s2(table_nocloud)
-table_nogaps = table_nogaps[table_nogaps["match_error"] < 0.1]
-```
-### **Monthly composites and image smoothing 📅**
-
-#### **Create monthly composites**
-
-```python
-# Generate monthly composites
-table_composites = datacube.monthly_composites_s2(
-    table_nogaps, agg_method="median", date_range=("2016-01-01", "2024-07-31")
-)
-```
-
-#### **Interpolate missing data**
-
-```python
-# Interpolate missing months if necessary
-table_interpolate = datacube.interpolate_s2(table=table_composites)
-```
-
-#### **Smooth reflectance values**
-
-```python
-# Smooth reflectance values across time
-table_smooth = datacube.smooth_s2(table=table_interpolate)
-```
-
-### **Super-resolution and visualization** 📐
-
-
-
-#### **Super-resolution**
-
-```python
-# Apply super-resolution to the image cube
-# table_final = datacube.super_s2(table_smooth)
-```
-
-
-#### **Display images**
-
-```python
-# Display the images from the data cube
-datacube.display_images(table=table_smooth)
-```
-
-#### **Create a GIF**
-
-```python
-# !apt-get install imagemagick
-import os
-os.system("convert -delay 20 -loop 0 wendy01/z_s2_07_smoothed_png/temp_07*.png animation.gif")
-
-from IPython.display import Image
-Image(filename='animation.gif', width=500)
+print(f"{len(final)} composites mensuales super-resueltos a 2.5 m")
 ```
 
 <p align="center">
-  <img src="https://huggingface.co/datasets/JulioContrerasH/DataMLSTAC/resolve/main/gif_satcube.gif" width="100%">
+  <img src="imgs/sr_compare.png" width="90%">
 </p>
 
-#### **Smooth reflectance values**
+## Paso a paso 🛠️
+
+Si prefieres controlar cada etapa (y entender qué hace cada una):
 
 ```python
-# Smooth reflectance values across time
-table_smooth = datacube.smooth_s2(table=table_interpolate)
+# 1. Metadata + descarga
+meta  = satcube.metadata(lon=-77.06165, lat=-9.53704, width=1024, height=1024,
+                         start="2022-05-01", end="2022-09-01", max_cloud=30)
+meta  = meta.select_bands("B1","B2","B3","B4","B5","B6","B7","B8","B8A","B9","B10","B11","B12")
+cubo  = meta.download(output_dir="raw")
+
+# 2. Co-registro sub-pixel
+alineado = cubo.align(output_dir="aligned")
+
+# 3. Enmascarado de nubes y filtro de calidad
+masked = alineado.cloud_masking(output_dir="masked", device="cuda", save_mask=True)
+limpio = masked[masked["clear_pct"] >= 70]
+
+# 4. Gap-filling + filtro de huecos
+relleno    = limpio.gapfill(output_dir="gapfilled")
+relleno_ok = relleno[relleno["remaining_gaps_pct"] <= 1.0]
+
+# 5. Composites mensuales + afinamiento
+mensual   = relleno_ok.composite(output_dir="monthly", agg_method="median")
+interp    = mensual.interpolate(output_dir="interp", despike_threshold=0.15)
+suavizado = interp.smooth(output_dir="smooth", smooth_w=7, smooth_p=2)
+
+# 6. Super-resolucion 10 m -> 2.5 m
+sr = suavizado.superresolve(output_dir="sr", variant="SEN2SRLite", device="cuda")
 ```
 
-## **Supported features and filters** ✨
+<p align="center">
+  <img src="imgs/reconstruction.png" width="100%">
+</p>
 
-- **Cloud masking:** Efficient removal of clouds from satellite images.
-- **Resampling methods:** Various methods for resampling and aligning imagery.
-- **Super-resolution:** ONNX-based models for improving image resolution.
+## Polígonos 🗺️
+
+Para un distrito o cuenca en vez de un parche cuadrado:
+
+```python
+meta = satcube.metadata_polygon(geojson, start="2022-01-01", end="2023-01-01", max_cloud=30)
+```
+
+Acepta shapely, WKT o GeoJSON.
+
+## Documentación 📚
+
+Guías completas en la [documentación](https://andesdatacube.github.io/satcube/): instalación, quickstart y una explicación de cada etapa del pipeline.

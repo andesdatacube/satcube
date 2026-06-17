@@ -2,13 +2,13 @@ docs_dir: .
 
 # Project information
 site_name: satcube
-site_url: https://ipl-uv.github.io/satcube
-site_author: IPL-UV
-site_description: Satcube is a Python package for managing Sentinel-2 satellite data cubes.
+site_url: https://andesdatacube.github.io/satcube/
+site_author: AndesDataCube
+site_description: satcube turns scattered Sentinel-2 imagery into clean, aligned and super-resolved data cubes.
 
 # Repository
-repo_url: https://github.com/ipl-uv/satcube
-repo_name: satcube
+repo_url: https://github.com/andesdatacube/satcube
+repo_name: andesdatacube/satcube
 use_directory_urls: false
 
 # Configuration
@@ -39,39 +39,44 @@ theme:
     - navigation.top
     - navigation.expand
     - navigation.indexes
-    - header.autohide 
+    - header.autohide
+    - content.code.copy
+    - content.code.annotate
 
 # Page tree
 nav:
-  - Home: 
-    - README.md
-    - Contributing: CONTRIBUTING.md
-    - Changelog: CHANGELOG.md
-    - Code of conduct: CODE_OF_CONDUCT.md
-    
+  - Home: README.md
+  - Installation: installation.md
+  - Quickstart: quickstart.md
+  - Pipeline: pipeline.md
+  - Contributing: CONTRIBUTING.md
+  - Changelog: CHANGELOG.md
+  - Code of conduct: CODE_OF_CONDUCT.md
+
 # Plugins
 plugins:
   - search
   - same-dir
-  - mkdocstrings 
   - awesome-pages
 
+# Markdown extensions
 markdown_extensions:
+  - meta
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.pathconverter
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - mdx_truly_sane_lists
   - toc:
       permalink: true
-  - pymdownx.highlight
-  - pymdownx.superfences
-  # - pymdownx.copybutton
-  - pymdownx.arithmatex
-  - pymdownx.tabbed
-  - mdx_truly_sane_lists
-  - pymdownx.tasklist
 
-
-# Extra CSS
+# Extra CSS (descomenta si creas docs/style/style.css)
 extra_css:
   - docs/style/style.css
-
-# Extra JavaScript
-extra_javascript:
-  - docs/js/copybutton.js
